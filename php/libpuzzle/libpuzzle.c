@@ -13,25 +13,22 @@ ZEND_DECLARE_MODULE_GLOBALS(libpuzzle)
 /* True global resources - no need for thread safety here */
 static int le_libpuzzle;
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_void, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
 /* {{{ libpuzzle_functions[]
  */
 zend_function_entry libpuzzle_functions[] = {
-        PHP_FE(puzzle_set_max_width, arginfo_void)
-        PHP_FE(puzzle_set_max_height, arginfo_void)
-        PHP_FE(puzzle_set_lambdas, arginfo_void)
-        PHP_FE(puzzle_set_noise_cutoff, arginfo_void)
-        PHP_FE(puzzle_set_p_ratio, arginfo_void)
-        PHP_FE(puzzle_set_contrast_barrier_for_cropping, arginfo_void)
-        PHP_FE(puzzle_set_max_cropping_ratio, arginfo_void)
-        PHP_FE(puzzle_set_autocrop, arginfo_void)
+        PHP_FE(puzzle_set_max_width, NULL)
+        PHP_FE(puzzle_set_max_height, NULL)
+        PHP_FE(puzzle_set_lambdas, NULL)
+        PHP_FE(puzzle_set_noise_cutoff, NULL)
+        PHP_FE(puzzle_set_p_ratio, NULL)
+        PHP_FE(puzzle_set_contrast_barrier_for_cropping, NULL)
+        PHP_FE(puzzle_set_max_cropping_ratio, NULL)
+        PHP_FE(puzzle_set_autocrop, NULL)
     
-        PHP_FE(puzzle_fill_cvec_from_file, arginfo_void)
-        PHP_FE(puzzle_compress_cvec, arginfo_void)
-        PHP_FE(puzzle_uncompress_cvec, arginfo_void)
-        PHP_FE(puzzle_vector_normalized_distance, arginfo_void)                
+        PHP_FE(puzzle_fill_cvec_from_file, NULL)
+        PHP_FE(puzzle_compress_cvec, NULL)
+        PHP_FE(puzzle_uncompress_cvec, NULL)
+        PHP_FE(puzzle_vector_normalized_distance, NULL)                
 
         {NULL, NULL, NULL}      /* Must be the last line in libpuzzle_functions[] */
 };
@@ -125,12 +122,13 @@ PHP_MINFO_FUNCTION(libpuzzle)
 PHP_FUNCTION(puzzle_fill_cvec_from_file)
 {    
     char *arg = NULL;
-    size_t arg_len;
+    int arg_len;
     PuzzleContext *context;
     PuzzleCvec cvec;
     
     context = &LIBPUZZLE_G(global_context);
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE ||
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+                              "s", &arg, &arg_len) == FAILURE ||
         arg_len <= 0) {
         RETURN_FALSE;
     }
@@ -139,7 +137,7 @@ PHP_FUNCTION(puzzle_fill_cvec_from_file)
         puzzle_free_cvec(context, &cvec);
         RETURN_FALSE;
     }
-    RETVAL_STRINGL(cvec.vec, cvec.sizeof_vec);
+    RETVAL_STRINGL(cvec.vec, cvec.sizeof_vec, 1);
     puzzle_free_cvec(context, &cvec);
 }
 /* }}} */
@@ -149,13 +147,13 @@ PHP_FUNCTION(puzzle_fill_cvec_from_file)
 PHP_FUNCTION(puzzle_compress_cvec)
 {    
     char *arg = NULL;
-    size_t arg_len;
+    int arg_len;
     PuzzleContext *context;
     PuzzleCompressedCvec compressed_cvec;
     PuzzleCvec cvec;
     
     context = &LIBPUZZLE_G(global_context);
-    if (zend_parse_parameters(ZEND_NUM_ARGS(),
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "s", &arg, &arg_len) == FAILURE ||
         arg_len <= 0) {
         RETURN_FALSE;
@@ -171,7 +169,7 @@ PHP_FUNCTION(puzzle_compress_cvec)
         RETURN_FALSE;
     }
     RETVAL_STRINGL(compressed_cvec.vec,
-                   compressed_cvec.sizeof_compressed_vec);
+                   compressed_cvec.sizeof_compressed_vec, 1);
     puzzle_free_compressed_cvec(context, &compressed_cvec);
     cvec.vec = NULL;
     puzzle_free_cvec(context, &cvec);    
@@ -183,13 +181,13 @@ PHP_FUNCTION(puzzle_compress_cvec)
 PHP_FUNCTION(puzzle_uncompress_cvec)
 {    
     char *arg = NULL;
-    size_t arg_len;
+    int arg_len;
     PuzzleContext *context;
     PuzzleCompressedCvec compressed_cvec;
     PuzzleCvec cvec;
     
     context = &LIBPUZZLE_G(global_context);
-    if (zend_parse_parameters(ZEND_NUM_ARGS(),
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                               "s", &arg, &arg_len) == FAILURE ||
         arg_len <= 0) {
         RETURN_FALSE;
@@ -204,7 +202,7 @@ PHP_FUNCTION(puzzle_uncompress_cvec)
         puzzle_free_compressed_cvec(context, &compressed_cvec);
         RETURN_FALSE;
     }
-    RETVAL_STRINGL(cvec.vec, cvec.sizeof_vec);
+    RETVAL_STRINGL(cvec.vec, cvec.sizeof_vec, 1);
     puzzle_free_cvec(context, &cvec);
     compressed_cvec.vec = NULL;
     puzzle_free_compressed_cvec(context, &compressed_cvec);    
@@ -216,7 +214,7 @@ PHP_FUNCTION(puzzle_uncompress_cvec)
 PHP_FUNCTION(puzzle_vector_normalized_distance)
 {    
     char *vec1 = NULL, *vec2 = NULL;
-    size_t vec1_len, vec2_len;
+    int vec1_len, vec2_len;
     PuzzleContext *context;
     PuzzleCvec cvec1, cvec2;
     double d;
@@ -224,12 +222,12 @@ PHP_FUNCTION(puzzle_vector_normalized_distance)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "ss|b",
+        (ZEND_NUM_ARGS() TSRMLS_CC, "ss|b",
          &vec1, &vec1_len, &vec2, &vec2_len, &fix_for_texts) == FAILURE ||
         vec1_len <= 0 || vec2_len <= 0) {
         RETURN_FALSE;
     }
-    if (ZEND_NUM_ARGS() < 3) {
+    if (ZEND_NUM_ARGS() TSRMLS_CC < 3) {
         fix_for_texts = (zend_bool) 1;
     }
     puzzle_init_cvec(context, &cvec1);
@@ -256,7 +254,7 @@ PHP_FUNCTION(puzzle_set_max_width)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "l", &width) == FAILURE ||
+        (ZEND_NUM_ARGS() TSRMLS_CC, "l", &width) == FAILURE ||
         width <= 0L || width > INT_MAX) {
         RETURN_FALSE;
     }
@@ -276,7 +274,7 @@ PHP_FUNCTION(puzzle_set_max_height)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "l", &height) == FAILURE ||
+        (ZEND_NUM_ARGS() TSRMLS_CC, "l", &height) == FAILURE ||
         height <= 0L || height > INT_MAX) {
         RETURN_FALSE;
     }
@@ -296,7 +294,7 @@ PHP_FUNCTION(puzzle_set_lambdas)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "l", &lambdas) == FAILURE ||
+        (ZEND_NUM_ARGS() TSRMLS_CC, "l", &lambdas) == FAILURE ||
         lambdas <= 0L || lambdas > INT_MAX) {
         RETURN_FALSE;
     }
@@ -316,7 +314,7 @@ PHP_FUNCTION(puzzle_set_noise_cutoff)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "d", &cutoff) == FAILURE) {
+        (ZEND_NUM_ARGS() TSRMLS_CC, "d", &cutoff) == FAILURE) {
         RETURN_FALSE;
     }
     if (puzzle_set_noise_cutoff(context, cutoff) != 0) {
@@ -335,7 +333,7 @@ PHP_FUNCTION(puzzle_set_p_ratio)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "d", &p_ratio) == FAILURE) {
+        (ZEND_NUM_ARGS() TSRMLS_CC, "d", &p_ratio) == FAILURE) {
         RETURN_FALSE;
     }
     if (puzzle_set_p_ratio(context, p_ratio) != 0) {
@@ -354,7 +352,7 @@ PHP_FUNCTION(puzzle_set_contrast_barrier_for_cropping)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "d", &barrier) == FAILURE) {
+        (ZEND_NUM_ARGS() TSRMLS_CC, "d", &barrier) == FAILURE) {
         RETURN_FALSE;
     }
     if (puzzle_set_contrast_barrier_for_cropping(context, barrier) != 0) {
@@ -373,7 +371,7 @@ PHP_FUNCTION(puzzle_set_max_cropping_ratio)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "d", &ratio) == FAILURE) {
+        (ZEND_NUM_ARGS() TSRMLS_CC, "d", &ratio) == FAILURE) {
         RETURN_FALSE;
     }
     if (puzzle_set_max_cropping_ratio(context, ratio) != 0) {
@@ -392,7 +390,7 @@ PHP_FUNCTION(puzzle_set_autocrop)
     
     context = &LIBPUZZLE_G(global_context);
     if (zend_parse_parameters
-        (ZEND_NUM_ARGS(), "b", &autocrop) == FAILURE) {
+        (ZEND_NUM_ARGS() TSRMLS_CC, "b", &autocrop) == FAILURE) {
         RETURN_FALSE;
     }
     if (puzzle_set_autocrop(context, (int) autocrop) != 0) {
